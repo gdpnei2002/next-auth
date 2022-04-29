@@ -1,12 +1,23 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
+import{ FormEvent, useState } from 'react'
 import styles from '../styles/Home.module.css'
 
-const Home: NextPage = () => {
-  return (
-  <h1>first</h1>
-  )
-}
+export default function Home() {
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
 
-export default Home
+function handleSubmit(event: FormEvent) {
+const data ={
+    email,
+    password,
+  }
+
+  console.log(data);
+}
+return (
+    <form onSubmit={handleSubmit} className={styles.container}>
+    <input type="email" value={email} onChange={e=> setEmail(e.target.value)} />
+    <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+    <button type="submit">Entrar</button>
+    </form>
+)
+}
