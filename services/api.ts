@@ -14,9 +14,13 @@ export const api = axios.create({
     }
 })
 
+interface AxiosErrorResponse {
+    code?: string;
+  }
+
 api.interceptors.response.use(response =>{
     return response;
-}, (error: AxiosError) => {
+}, (error: AxiosError<AxiosErrorResponse>) => {
     if(error.response.status === 401){
         if (error.response.data?.code === 'token.expired'){
             cookies = parseCookies();
