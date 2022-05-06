@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { destroyCookie, parseCookies, setCookie } from "nookies";
 import { signOut } from "../contexts/AuthContext";
+import { AuthTokenError } from "./errors/AuthTokenError";
 
 let isRefreshing = false;
 let failedRequestsQueue = [];
@@ -77,6 +78,8 @@ api.interceptors.response.use(response =>{
     } else {
         if(typeof window !== 'undefined'){
             signOut();
+            } else{
+                return Promise.reject(new AuthTokenError)
             }
         }
     }
