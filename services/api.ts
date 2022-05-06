@@ -1,13 +1,14 @@
 import axios, { AxiosError } from "axios";
-import { Router } from "next/router";
 import { destroyCookie, parseCookies, setCookie } from "nookies";
 import { signOut } from "../contexts/AuthContext";
 
-let cookies = parseCookies();
 let isRefreshing = false;
 let failedRequestsQueue = [];
 
-export const api = axios.create({
+export function setupAPIClient(ctx = undefined){
+    let cookies = parseCookies(ctx);
+    
+const api = axios.create({
     baseURL: 'http://localhost:3333',
     headers: {
         Authorization: `Bearer ${cookies['nextauth.token']}`
@@ -23,7 +24,7 @@ api.interceptors.response.use(response =>{
 }, (error: AxiosError<AxiosErrorResponse>) => {
     if(error.response.status === 401){
         if (error.response.data?.code === 'token.expired'){
-            cookies = parseCookies();
+            cookies = parseCookies(ctx);
 
             const { 'nextauth.refreshToken' : refreshToken } = cookies;
             const originalConfig = error.config
@@ -36,11 +37,11 @@ api.interceptors.response.use(response =>{
                 }).then(response => {
                     const {token} = response.data;
     
-                    setCookie(undefined, 'nextauth.token', token,{
+                    setCookie(ctx, 'nextauth.token', token,{
                         maxAge: 60 * 60 * 24 * 30,
                         path: '/'
                     })
-                    setCookie(undefined, 'nextauth.refreshToken', response.data.refreshToken,{
+                    setCookie(ctx, 'nextauth.refreshToken', response.data.refreshToken,{
                         maxAge: 60 * 60 * 24 * 30,
                         path: '/'
                     })
@@ -52,6 +53,10 @@ api.interceptors.response.use(response =>{
                   }).catch(err => {
                     failedRequestsQueue.forEach(request => request.onFailure(err))
                     failedRequestsQueue = [];
+
+                    if(typeof window !== 'undefined'){
+                        signOut()
+                    }
                   }).finally(() => {
                     isRefreshing = false
                   });
@@ -70,9 +75,13 @@ api.interceptors.response.use(response =>{
         })
       });
     } else {
+        if(typeof window !== 'undefined'){
             signOut();
+            }
         }
     }
 
     return Promise.reject(error);
-})
+    })
+    return api
+}
